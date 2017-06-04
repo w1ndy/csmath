@@ -6,26 +6,29 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 
-from sklearn.linear_model import Ridge
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.pipeline import make_pipeline
-
 def generate_curve(fn=np.sin):
     x = np.arange(0, 2 * math.pi, 0.05)
     y = fn(x)
     return x, y
 
+sampled = {}
+
 def generate_points(N):
+    if N in sampled: return sampled[N]
     x = np.linspace(0, 2 * math.pi, num=N)
-    y = np.sin(x) + np.random.normal(scale=0.15, size=N)
+    y = np.sin(x) + np.random.normal(scale=0.2, size=N)
+    sampled[N] = (x, y)
     return x, y
 
 def generate_fit(x, y, deg, l):
-    model = make_pipeline(PolynomialFeatures(deg), Ridge(alpha=l/2))
-    model.fit(x.reshape(-1, 1), y)
-    xp = np.arange(0, 2 * math.pi, 0.05)
-    yp = model.predict(xp.reshape(-1, 1))
-    return xp, yp
+    A = np.zeros((len(x), deg + 1))
+    for k in range(deg + 1):
+        A[:, k] = np.power(x, k)
+    At = A.transpose()
+    w = np.linalg.inv(At.dot(A) + l * np.identity(deg + 1)).dot(At).dot(y)
+    fn = np.poly1d(w[::-1])
+    return generate_curve(fn)
+    #return xp, yp
 
 def draw(N, M, l=0):
     xp, yp = generate_points(N)
@@ -58,7 +61,7 @@ def main():
 
     plt.subplot(325)
     plt.plot(xc, yc, 'g')
-    draw(10, 9, l=math.exp(-18))
+    draw(10, 9, l=math.exp(-3))
 
     plt.tight_layout()
 
