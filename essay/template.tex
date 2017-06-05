@@ -135,26 +135,31 @@ L_{\text{dir}}=\sum^N_{i=1}\frac{\rho}{\pi}L_{\text{in}}(\omega_i)V(\omega_i)\te
 
 \subsection{间接弹射}
 
-为了包含一次光线的间接弹射，我们可以利用上次渲染储存在帧缓冲中的直射光信息：
-
-%\CJKfamily{fs}
-%中文部分，可以中英文混合
-%
-%\CJKfamily{hei}
-%中文部分，可以中英文混合
-%
-%\CJKfamily{li}
-%中文部分，可以中英文混合
-%
-%\CJKfamily{kai}
-%中文部分，可以中英文混合
-%
-%\CJKfamily{song}
-%中文部分，可以中英文混合
+为了包含一次光线的间接弹射，我们可以利用上次渲染储存在帧缓冲中的直射光信息：对于每一个被当做遮挡物的采样点（$A,B,D$），对应像素的颜色$L_{\text{pixel}}$被用于在表面上的小面片辐射源（图\ref{fig:occluder}右侧所示）。我们在这里考虑源的法向量，防止逆向片源产生的颜色溢出（color bleeding）。周围几何体产生的附加辐射度可以被近似为：
+\begin{equation*}
+L_{\text{ind}}(P)=\sum^N_{i=1}\frac{\rho}{\pi}L_{\text{pixel}}(1-V(\omega_i))\frac{A_s\text{cos}\theta_{s_i}\text{cos}\theta_{r_i}}{d^2_i}
+\end{equation*}
+其中，$d_i$是点$P$到遮挡物$i$的距离（$d_i$被限定在1以内以避免奇异性问题），$\theta_{s_i}$和$\theta_{r_i}$是源、目标的法向量和发射方向的夹角。$A_s$是小面片的面积。作为面片面积的初始值，我们假定半球上是平的。因此，底圆可以被细分成$N$个区域，每个区域覆盖了面积$A_s=\pi r^2_{\text{max}}/N$。实际的值可能更高，取决于半球中斜率的分布，所以我们可以用这个参数来手动控制颜色溢出。在图\ref{fig:occluder}的例子中，面片$A$没有间接光贡献，因为它的朝向是反的。面片$C$在点$P$的负半空间中，因此也没有贡献。面片$B$和$D$是点$P$的间接光源。
 
 \section{实验结果}
 
+\begin{figure}[htbp]
+    \vspace{-3mm}
+	\centering
+  	\includegraphics[width=0.9\textwidth]{fig/result}
+    \vspace{-4mm}
+  	\caption{屏幕空间方向遮蔽的渲染结果与对比}
+  	\label{fig:result}
+    \vspace{-1mm}
+\end{figure}
+
+经典SSAO算法\cite{DBLP:conf/si3d/2007}有着和SSDO算法相似的步骤和计算代价。SSDO需要更多的计算量来评估着色模型，但是在可见性判断上是和SSAO较为相似的。SSDO算法的渲染结果如图\ref{fig:result}所示。SSDO算法可以正确的显示带有颜色的阴影，而SSAO算法仅仅只在每个地点显示灰色阴影。间接弹射的光照效果也同样可从图中观察得到。
+
 \section{小结与讨论}
+
+间接弹射和方向遮挡的引入提高了人对复杂结构的感知，使几何与材质光照变得一致。经典环境光遮蔽的一个问题是光照强度被完全忽略：遮挡物周围的所有东西都同等地变暗，即使光照是各向异性的。
+在许多场景中，例如户外天空光源的场景，光照是柔和的，但仍然有强烈的方向性。在变化的光照下使用传统的环境光遮蔽算法会因为阴影保持不变的同时底下着色发生变化而产生主观上的瑕疵。这将会给人一种泥土的错觉，因为反射性的改变（尘埃、泥土、铜绿）是感官上对于这种在不同光照下均匀变暗一种最合理的解释。
+利用合适的方向遮挡，复杂结构中的细节将会相对于大尺度上的光照产生合理的阴影（软度、尺寸、方向、颜色等）。
 
 \bibliographystyle{abbrv}
 \bibliography{template}
